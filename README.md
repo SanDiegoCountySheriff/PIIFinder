@@ -1,5 +1,5 @@
 # PIIFinder
-Python Application using spaCy to find PII
+Python Application using spaCy to find Personal Identifying Information
 
 ## Requirements  
 ##### If you're behind a corporate firewall you might need to use the second set of commands to complete the download.

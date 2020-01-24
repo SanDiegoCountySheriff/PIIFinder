@@ -21,7 +21,7 @@ exp_list      = ""
 first_char    = ""
 # EDIT AS NEEDED #
 AMBIG_PATH = 'Wordlists/AmbiguousNames.txt'
-WORDLIST   = 'Wordlists/bNAMES.txt'
+WORDLIST   = 'Wordlists/NAMES.txt'
 REGEX_PATH = 'Wordlists/REGEX.txt'
 
 #############
@@ -178,7 +178,7 @@ def set_up():
         
         with open('Result_Logs/TIME' + log_name, 'w') as timer:
 
-            timer.write(f'\nTime to complete: {end - start:.2f}s\n')
+            timer.write(f'Time to complete: {end - start:.2f}s\n')
 
         # Log is created with results of PII found [Naming: log (date) (time) (name of file scanned) .txt]
         with open('Result_Logs/NAMES ' + log_name, 'w+') as y:
@@ -202,6 +202,7 @@ def set_up():
             for result in final_regex_list:
                 
                 y.write("%s\n" % result)
+
 
 ################
 # GUI Settings #

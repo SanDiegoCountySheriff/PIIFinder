@@ -39,13 +39,13 @@ def hide_me(event):
     to_delete = event.widget.cget('text')
 
     # Appends entries from deletion_list to AmbiguousNames.txt
-    with open('Wordlists/AmbiguousNames.txt', 'a') as f:
+    with open(AMBIG_PATH, 'a') as f:
         f.write("%s\n" % to_delete)
 
-    uniqlines = set(open('Wordlists/AmbiguousNames.txt').readlines())
+    uniqlines = set(open(AMBIG_PATH).readlines())
     uniqlines = list(uniqlines)
     uniqlines.sort()
-    bar = open('Wordlists/AmbiguousNames.txt', 'w')
+    bar = open(AMBIG_PATH, 'w')
     bar.writelines(uniqlines)
     bar.close()
     

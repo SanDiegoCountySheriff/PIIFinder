@@ -203,7 +203,6 @@ def set_up():
                 
                 y.write("%s\n" % result)
 
-
 ################
 # GUI Settings #
 ################

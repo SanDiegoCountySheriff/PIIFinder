@@ -127,9 +127,10 @@ def set_up():
         final_word_list  = []
         final_regex_list = []
 
-        with open(AMBIG_PATH, 'r') as ambiguous, open(REGEX_PATH, 'r') as reg, open(path, 'r') as explanation:
+        with open(AMBIG_PATH, 'r') as ambiguous, open(REGEX_PATH, 'r') as reg, open(path, 'r') as explanation, open(WORDLIST, 'r') as wl:
 
             regex = reg.read().splitlines()
+            word_list = set(wl.read().splitlines())
             ambig_list = ambiguous.read().splitlines()
             exp_list = explanation.read().splitlines()          
 
@@ -144,6 +145,7 @@ def set_up():
 
                     final_regex_list = final_regex_list + result
 
+        #NAME SEARCH
         for exp in exp_list:
 
             progressbar(exp_list.index(exp), len(exp_list))
@@ -155,9 +157,13 @@ def set_up():
 
                 x = ent.label_
                 y = ent.text
+                if " " in y:
+                    z = y.upper().split(" ")
+                    temp_set = set(z)
+                else:
+                    temp_set = {y.upper()}
 
-                if (x == "ORG" or x == "PERSON") and (y not in ambig_list) and len(y) >= MIN_SIZE:
-                #if x != "":
+                if (x == "ORG" or x == "PERSON") and (y not in ambig_list) and (len(y) >= MIN_SIZE) and (temp_set.issubset(word_list)):
 
                     final_word_list.append(exp + "==" + x + "==" + ent.text)
 
@@ -171,6 +177,7 @@ def set_up():
         log_name = datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S') + " " + path.split('/')[-1]
         
         with open('Result_Logs/TIME' + log_name, 'w') as timer:
+
             timer.write(f'\nTime to complete: {end - start:.2f}s\n')
 
         # Log is created with results of PII found [Naming: log (date) (time) (name of file scanned) .txt]
@@ -195,7 +202,6 @@ def set_up():
             for result in final_regex_list:
                 
                 y.write("%s\n" % result)
-
 
 ################
 # GUI Settings #

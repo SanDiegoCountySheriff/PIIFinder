@@ -7,7 +7,7 @@ Python Application using spaCy to find Personal Identifying Information
 ```
 git clone https://github.com/SanDiegoCountySheriff/PIIFinder.git
 or
-Download the files directly
+Download the files directly from github
 ```
 **spaCy**  
 ```

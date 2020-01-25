@@ -2,7 +2,7 @@
 Python Application using spaCy to find Personal Identifying Information
 
 ## Requirements  
-##### If you're behind a corporate firewall you might need to use the second set of commands to complete the download.
+###### If you're behind a corporate firewall you might need to use the second set of commands to complete the download.
 **PIIFinder**  
 ```
 git clone https://github.com/SanDiegoCountySheriff/PIIFinder.git

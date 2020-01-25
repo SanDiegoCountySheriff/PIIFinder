@@ -228,6 +228,7 @@ canvas.configure(yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
 
 #Sets widgets in chosen location
 def start_screen(): 
+    
     textBox.place(relx=.5, rely=.1, anchor="c")
     button1.place(relx=.5, rely=.22, anchor="c")
     button2.place(relx=.5, rely=.285, anchor="c")

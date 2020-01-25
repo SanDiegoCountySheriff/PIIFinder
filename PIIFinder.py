@@ -15,10 +15,8 @@ import io
 ####################
 # Global Variables #
 ####################
-deletion_list = []
-path_list     = ""
-exp_list      = ""
-first_char    = ""
+path_list = []
+
 # EDIT AS NEEDED #
 AMBIG_PATH = 'Wordlists/AmbiguousNames.txt'
 WORDLIST   = 'Wordlists/NAMES.txt'
@@ -98,8 +96,8 @@ def regex_finder(e, exp_line):
 # set_up: Sets program up for search to begin
 def set_up():
 
-    global ambig_list
-    global exp_list
+    ambig_list = []
+    exp_list   = []
 
     MIN_SIZE = int(comboBox.get())
 
@@ -157,6 +155,7 @@ def set_up():
 
                 x = ent.label_
                 y = ent.text
+
                 if " " in y:
                     z = y.upper().split(" ")
                     temp_set = set(z)

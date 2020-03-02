@@ -1,26 +1,24 @@
 from __future__ import unicode_literals, print_function
-
-from pathlib import Path
-import random
-import plac
-import json
-
 from tkinter.filedialog import askopenfilenames
 from spacy.util import minibatch, compounding
 from spacy.gold import GoldParse
 from tkinter import filedialog
 from itertools import product
+from pathlib import Path
 from tkinter import ttk
 import multiprocessing
 import tkinter as tk
 import datetime
 import os.path
+import random
 import spacy
+import json
+import plac
 import time
 import sys
-import re
-import os
 import io
+import os
+import re
 
 ####################
 # Global Variables #
@@ -31,6 +29,7 @@ path_list     = []
 full_line     = ""
 training_path = ""
 trainingdata  = ""
+model_path    = ""
 
 # EDIT AS NEEDED #
 AMBIG_PATH = 'Wordlists/AmbiguousNames.txt'
@@ -40,6 +39,23 @@ WORDLIST   = 'Wordlists/NAMES.txt'
 #############
 # Functions #
 #############
+
+def load_stock_mod():
+    global model_path
+
+    model_entry.delete(0, 'end')
+    model_path = "en_core_web_lg"
+    model_entry.insert(tk.END, "en_core_web_lg")
+
+def load_custom_mod():
+    global model_path
+
+    model_entry.delete(0, 'end')
+    filename  = filedialog.askdirectory()
+    model_path = filename
+    print(model_path)
+    name = filename.split('/')[-1]
+    model_entry.insert(tk.END, name + "\n")
 
 # hide_me: Removes label that was clicked from list of results and
 #          adds the name that was found on label to AmbiguousNames.txt     
@@ -122,8 +138,7 @@ def set_up():
 
     # Model Load
     print("Loading Model...")
-    #nlp = spacy.load("en_core_web_lg")
-    nlp = spacy.load("en_core_web_lg")
+    nlp = spacy.load(model_path)
     print("Model Loaded\n")
 
     # If AmbiguousNames.txt isn't detected in 
@@ -141,6 +156,8 @@ def set_up():
     start = time.time()
 
     # The user selected file's paths are iterated through 
+    counter = 0
+    
     for path in path_list:
 
         final_word_list  = []
@@ -202,10 +219,15 @@ def set_up():
 
             timer.write(f'Time to complete: {end - start:.2f}s\n')
 
+       
         # Log is created with results of PII found [Naming: log (date) (time) (name of file scanned) .txt]
         with open('Result_Logs/NAMES ' + log_name, 'w+') as y:
 
-            counter = 0
+
+            name_label = tk.Label(scrollable_frame, text="NAMES", anchor='w')
+            name_label.grid(row=counter, column=0, columnspan=2, sticky='ew')
+            name_label.config(bg="gray", fg="white")
+            counter += 1
 
             for result in final_word_list:
                 
@@ -228,10 +250,19 @@ def set_up():
         
         with open('Result_Logs/REGEX ' + log_name, 'w+') as y:
             
+            regex_label = tk.Label(scrollable_frame, text="REGEX", anchor='w')
+            regex_label.grid(row=counter, column=0, columnspan=2, sticky='ew')
+            regex_label.config(bg="gray", fg="white")
+
+            counter += 1
+
             for result in final_regex_list:
                 
                 y.write("%s\n" % result)
-
+                
+                label = tk.Label(scrollable_frame, text=result, anchor='w')
+                label.grid(row=counter, column=0, columnspan=2, sticky='w')
+                counter += 1
 
 #############################################
 # PREPARE TAB
@@ -436,13 +467,16 @@ def train_model():
     else:
         print("Choose training data")
 
+def regex_edit():
+    os.startfile('Wordlists\REGEX.txt')
+
 
 ################
 # GUI Settings #
 ################
 app = tk.Tk()
 app.title('PII DETECTOR')
-app.geometry("1140x545")
+app.geometry("1150x545")
 
 #Notebook(Tabs) Settings
 n = ttk.Notebook(app)
@@ -455,6 +489,10 @@ n.add(f2, text='       PREPARE       ')
 n.add(f3, text='       TRAIN       ')
 
 #Finder Settings
+model_btn1 = tk.Button(f1, text='Custom Model', width=17, command=load_custom_mod)
+model_btn2 = tk.Button(f1, text='Stock Model', width=17, command=load_stock_mod)
+model_entry = tk.Entry(f1, width=42)
+
 button1 = tk.Button(f1, text='Select Files', width=17, command=selector)
 button2 = tk.Button(f1, text='Scan', width=17, command=set_up)
 inst_label1 = tk.Label(f1, text="Min Word Length", anchor='w')
@@ -462,6 +500,8 @@ inst_label2 = tk.Label(f1, text="After scan is finished, click on the button wit
 comboBox = ttk.Combobox(f1, values=["1", "2","3","4","5","6","7","8"], width=7, justify="center", state="readonly")
 comboBox.current(2)
 textBox = tk.Text(f1, height=4, width=32)
+
+regex_button = tk.Button(f1, text='Edit REGEX', width=17, command=regex_edit)
 
 #Scrollable Container Config
 container  = tk.Frame(f1)
@@ -473,7 +513,7 @@ scrollable_frame.bind("<Configure>",lambda e: canvas.configure(scrollregion=canv
 canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 canvas.configure(yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
 
-#Training Settings
+#Prepare Settings
 textBox1  = tk.Text(f2, height=18, width=50)
 textBox2  = tk.Text(f2, height=1, width=50)
 
@@ -549,11 +589,14 @@ def start_screen():
 
     #FIND
     textBox.grid(row=0, column=0, columnspan=2, sticky="nw")
-    button1.grid(row=1, column=0, sticky="nw")
-    button2.grid(row=1, column=1, sticky="nw")
-    inst_label1.grid(row=2, column=0, sticky="nw")
-    comboBox.grid(row=2, column=1, sticky="nw")
-    
+    model_btn1.grid(row=1, column=0, sticky="nw")
+    model_btn2.grid(row=1, column=1, sticky="nw")
+    model_entry.grid(row=2, column=0, columnspan=2, sticky="nw")
+    button1.grid(row=4, column=0, sticky="nw")
+    button2.grid(row=4, column=1, sticky="nw")
+    inst_label1.grid(row=3, column=0, sticky="nw")
+    comboBox.grid(row=3, column=1, sticky="nw")
+    regex_button.grid(row=5, column=0, sticky="nw")
     container.grid(row=0, column=2, sticky="ew", rowspan=100)
     scrollbary.pack(side="right", fill="y")
     scrollbarx.pack(side="bottom", fill="x")
@@ -564,10 +607,8 @@ def start_screen():
     scrollbary2.pack(side="right", fill="y")
     scrollbarx2.pack(side="bottom", fill="x")
     canvas2.pack(side="left", fill="both", expand=True)
-    
     textBox2.grid(row=4, column=1, sticky='ew', columnspan=20)
     textBox2.insert(tk.END, "(Insert Custom Training Data here)")
-    
     button0T.grid(row=4, column=0, sticky='ew')
     button1T.grid(row=5, column=0, sticky='ew')
     button2T.grid(row=6, column=0, sticky='ew')
@@ -602,7 +643,6 @@ def start_screen():
     old_model_name_etry.grid(row=1, column=1)
     load_model.grid(row=2, column=0)
     stock_model.grid(row=2, column=1)
-
 
 #Starts App  
 def main(): 

@@ -2,10 +2,10 @@ from __future__ import unicode_literals, print_function
 from tkinter.filedialog import askopenfilenames
 from spacy.util import minibatch, compounding
 from spacy.gold import GoldParse
-from tkinter import filedialog
-from itertools import product
-from pathlib import Path
-from tkinter import ttk
+from tkinter    import filedialog
+from itertools  import product
+from pathlib    import Path
+from tkinter    import ttk
 import multiprocessing
 import tkinter as tk
 import datetime
@@ -31,54 +31,43 @@ training_path = ""
 trainingdata  = ""
 model_path    = ""
 
-# EDIT AS NEEDED #
+####################
+# Global Constants #
+####################
 AMBIG_PATH = 'Wordlists/AmbiguousNames.txt'
 REGEX_PATH = 'Wordlists/REGEX.txt'
 WORDLIST   = 'Wordlists/NAMES.txt'
 
-#############
-# Functions #
-#############
-
+#############################################
+# FIND TAB
+#############################################
 def load_stock_mod():
     global model_path
 
+    # model_entry widget's text is cleared
     model_entry.delete(0, 'end')
+
+    # Stock model is selected
     model_path = "en_core_web_lg"
+
+    # Stock model name is inserted into model_entry widget
     model_entry.insert(tk.END, "en_core_web_lg")
 
 def load_custom_mod():
     global model_path
 
+    # model_entry widget's text is cleared
     model_entry.delete(0, 'end')
+
+    # Dialog box opens up for user to select model
     filename  = filedialog.askdirectory()
+
+    # User selected model gets selected as model to scan file with
     model_path = filename
-    print(model_path)
+
+    # Model's name is displayed on entry widget
     name = filename.split('/')[-1]
     model_entry.insert(tk.END, name + "\n")
-
-# hide_me: Removes label that was clicked from list of results and
-#          adds the name that was found on label to AmbiguousNames.txt     
-def hide_me(event):
-
-    list_in_row = scrollable_frame.grid_slaves(row=int(event.widget.grid_info()['row']))
-    
-    for i in list_in_row:
-        i.grid_forget()
-
-    to_delete = event.widget.cget('text')
-
-    # Appends entries from deletion_list to AmbiguousNames.txt
-    with open(AMBIG_PATH, 'a') as f:
-        f.write("%s\n" % to_delete)
-
-    uniqlines = set(open(AMBIG_PATH).readlines())
-    uniqlines = list(uniqlines)
-    uniqlines.sort()
-
-    bar = open(AMBIG_PATH, 'w')
-    bar.writelines(uniqlines)
-    bar.close()
 
 # progressbar: Displays a progress bar to console
 def progressbar(progress, total, printEnd = "\r"):
@@ -101,10 +90,10 @@ def selector():
     global path_list
 
     # Textbox that holds file names is cleared
-    # Dialog box appears for user to select files to be scanned 
-    # and the selected file's paths are passed to a list
     textBox.delete(1.0, tk.END)
+    # Dialog box appears for user to select files to be scanned 
     filename  = askopenfilenames()
+    # and the selected file's paths are passed to a list
     path_list = list(filename)
 
     # Filename is extracted from paths and added to textbox
@@ -132,11 +121,11 @@ def set_up():
     ambig_list = []
     exp_list   = []
 
-    # MIN_SIZE dictates the minimum length of the names
-    # that get saved into the result list
+    # Value is passed from comboBox widget to MIN_SIZE
+    # MIN_SIZE dictates the min length of names that get found
     MIN_SIZE = int(comboBox.get())
 
-    # Model Load
+    # User selected model loads
     print("Loading Model...")
     nlp = spacy.load(model_path)
     print("Model Loaded\n")
@@ -153,15 +142,17 @@ def set_up():
         os.mkdir('Result_Logs/')    
 
     # Benchmark Timer Start    
-    start = time.time()
 
     # The user selected file's paths are iterated through 
     counter = 0
     
+    #All user selected files are iterated over
     for path in path_list:
 
         final_word_list  = []
         final_regex_list = []
+        final_loc_list   = []
+        final_dt_list    = []
 
         with open(AMBIG_PATH, 'r') as ambiguous, open(REGEX_PATH, 'r') as reg, open(path, 'r') as explanation, open(WORDLIST, 'r') as wl:
 
@@ -181,18 +172,29 @@ def set_up():
 
                     final_regex_list = final_regex_list + result
 
+        start = time.time()
         #NAME SEARCH
         for exp in exp_list:
 
+            # Progress bar
             progressbar(exp_list.index(exp), len(exp_list))
 
-            exp2 = exp.split('\t', 2)[2]
+            # Needs to be more generic, this only works for our specific case
+            try:
+                exp2 = exp.split('\t', 2)[2]
+            except:
+                exp2 = exp
             
+            # String gets passed to model for NER
             doc = nlp(exp2)
 
+            # Entities recognized are added to final_word_list
             for ent in doc.ents:
 
+                #String's label
                 x = ent.label_
+
+                #String's text
                 y = ent.text
 
                 if " " in y:
@@ -201,10 +203,14 @@ def set_up():
                 else:
                     temp_set = {y.upper()}
 
+                # Only entities recognized as ORG or PERSON and larger than the MIN_SIZE
+                # are added to the final_word_list
                 if (x == "ORG" or x == "PERSON") and (len(y) >= MIN_SIZE):
-                #if (x == "DATE"):
-
                     final_word_list.append(exp2 + "==" + x + "==" + ent.text)
+                elif (x == "LOC" or x == "GPE" or x == "FAC"):
+                    final_loc_list.append(exp2 + "==" + x + "==" + ent.text)
+                elif (x == "DATE" or x == "TIME"):
+                    final_dt_list.append(exp2 + "==" + x + "==" + ent.text)
 
         # Benchmark Timer End
         end = time.time()
@@ -215,15 +221,15 @@ def set_up():
 
         log_name = datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S') + " " + path.split('/')[-1]
         
+        # Time to complete the scan gets saved to its own file
         with open('Result_Logs/TIME' + log_name, 'w') as timer:
 
             timer.write(f'Time to complete: {end - start:.2f}s\n')
 
-       
         # Log is created with results of PII found [Naming: log (date) (time) (name of file scanned) .txt]
         with open('Result_Logs/NAMES ' + log_name, 'w+') as y:
-
-
+            
+            # Name label separator is created
             name_label = tk.Label(scrollable_frame, text="NAMES", anchor='w')
             name_label.grid(row=counter, column=0, columnspan=2, sticky='ew')
             name_label.config(bg="gray", fg="white")
@@ -233,29 +239,61 @@ def set_up():
                 
                 y.write("%s\n" % result)
 
-                #Label is added to the result list on the GUI  
-                label = tk.Label(scrollable_frame, text=result.split('==')[0], anchor='w')
-                button = tk.Button(scrollable_frame, text=result.split('==')[2], anchor='n')
-                button.bind("<Button-1>", hide_me)
-                button.grid(row=counter, column=0, sticky='ew')
-                label.grid(row=counter, column=1, sticky='w')
+                # Label is added to the result list on the GUI  
+                label = tk.Label(scrollable_frame, text=result, anchor='w')
+                label.grid(row=counter, column=0, sticky='w')
 
                 label2 = tk.Text(scrollable_frame2, height=1, width=150)
                 label2.insert(tk.END, result.split('==')[0])
                 button2 = tk.Button(scrollable_frame2, text='CORR', anchor='n')
-                button2.bind("<Button-1>", hide_me_too)
+                button2.bind("<Button-1>", correct)
                 button2.grid(row=counter, column=0, sticky='ew')
                 label2.grid(row=counter, column=1, sticky='w')
+                counter += 1
+
+        with open('Result_Logs/LOCATIONS ' + log_name, 'w+') as y:
+            
+            # Regex label separator is created
+            locations_label = tk.Label(scrollable_frame, text="LOCATIONS", anchor='w')
+            locations_label.grid(row=counter, column=0, columnspan=2, sticky='ew')
+            locations_label.config(bg="gray", fg="white")
+            counter += 1
+
+            #Regex search results are displayed as labels in GUI
+            for result in final_loc_list:
+                
+                y.write("%s\n" % result)
+                
+                label = tk.Label(scrollable_frame, text=result, anchor='w')
+                label.grid(row=counter, column=0, columnspan=2, sticky='w')
+                counter += 1
+
+        with open('Result_Logs/DATETIMES ' + log_name, 'w+') as y:
+        
+            # Regex label separator is created
+            locations_label = tk.Label(scrollable_frame, text="DATES/TIMES", anchor='w')
+            locations_label.grid(row=counter, column=0, columnspan=2, sticky='ew')
+            locations_label.config(bg="gray", fg="white")
+            counter += 1
+
+            #Regex search results are displayed as labels in GUI
+            for result in final_dt_list:
+                
+                y.write("%s\n" % result)
+                
+                label = tk.Label(scrollable_frame, text=result, anchor='w')
+                label.grid(row=counter, column=0, columnspan=2, sticky='w')
                 counter += 1
         
         with open('Result_Logs/REGEX ' + log_name, 'w+') as y:
             
+            # Regex label separator is created
             regex_label = tk.Label(scrollable_frame, text="REGEX", anchor='w')
             regex_label.grid(row=counter, column=0, columnspan=2, sticky='ew')
             regex_label.config(bg="gray", fg="white")
-
             counter += 1
 
+            #Regex search results are displayed as labels in GUI
             for result in final_regex_list:
                 
                 y.write("%s\n" % result)
@@ -263,6 +301,23 @@ def set_up():
                 label = tk.Label(scrollable_frame, text=result, anchor='w')
                 label.grid(row=counter, column=0, columnspan=2, sticky='w')
                 counter += 1
+
+def regex_add():
+
+    addition = regex_entry.get().strip()
+
+    if addition != "":
+
+        uniqlines = set(open(REGEX_PATH).readlines())
+        uniqlines = list(uniqlines)
+        uniqlines.append("^.*" + addition + "\s?.*$\n")
+        uniqlines.sort()
+
+        bar = open(REGEX_PATH, 'w')
+        bar.writelines(uniqlines)
+        bar.close()
+    else:
+        print("Field is empty!")
 
 #############################################
 # PREPARE TAB
@@ -272,24 +327,30 @@ def index_labeler(event):
     global index_label
     global full_line
 
+    # Terminal screen gets cleared
     os.system("cls")
-    
+    # Widget that had focus gets saved to variable widget
     widget = app.focus_get() 
-
+    # Text from widget gets saved to full_line
     full_line = widget.get("1.0",tk.END).rstrip()
     print(full_line)
+    # Highlighted text within full_line gets saved to line
     line = widget.selection_get()
 
+    # Index numbers of the start and end of the highlighted text get saved
     s0 = int(widget.index("sel.first").split('.',1)[1])
     s1 = int(widget.index("sel.last").split('.',1)[1])
+    # The text of the button you clicked gets saved to label
     label = event.widget.cget('text')
 
+    # The index numbers and label get turned into a tuple
+    # and then appended into a list
     tup = [s0, s1, label]
     index_label.append(tup)
 
     print(index_label)
 
-def hide_me_too(event):
+def correct(event):
 
     global index_label
 
@@ -309,6 +370,7 @@ def hide_me_too(event):
         print("You haven't selected any data to train with\n")
 
 def index_undo():
+
     if index_label:
         index_label.pop()
         print(index_label)
@@ -316,6 +378,7 @@ def index_undo():
         print("You haven't selected any data to train with\n")
 
 def undo():
+    
     if training_data:
         training_data.pop()
         print(training_data)
@@ -438,13 +501,13 @@ def train_model():
                     losses = {}
                     random.shuffle(examples)
                     # batch up the examples using spaCy's minibatch
-                    batches = minibatch(TRAIN_DATA, size=compounding(4.0, 32.0, 1.001))
+                    batches = minibatch(examples, size=compounding(4.0, 32.0, 1.001))
                     for batch in batches:
                         texts, annotations = zip(*batch)
                         nlp.update(
                             texts,  # batch of texts
                             annotations,  # batch of annotations
-                            drop=0.5,  # dropout - make it harder to memorise data
+                            drop=0.2,  # dropout - make it harder to memorise data
                             losses=losses,
                         )
                     print("Losses", losses)
@@ -470,10 +533,9 @@ def train_model():
 def regex_edit():
     os.startfile('Wordlists\REGEX.txt')
 
-
-################
-# GUI Settings #
-################
+#############################################
+# GUI Settings 
+#############################################
 app = tk.Tk()
 app.title('PII DETECTOR')
 app.geometry("1150x545")
@@ -501,7 +563,10 @@ comboBox = ttk.Combobox(f1, values=["1", "2","3","4","5","6","7","8"], width=7, 
 comboBox.current(2)
 textBox = tk.Text(f1, height=4, width=32)
 
+
 regex_button = tk.Button(f1, text='Edit REGEX', width=17, command=regex_edit)
+regex_entry = tk.Entry(f1, width=21)
+regex_enter = tk.Button(f1, text='+ to REGEX', width=17, command=regex_add)
 
 #Scrollable Container Config
 container  = tk.Frame(f1)
@@ -516,7 +581,6 @@ canvas.configure(yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
 #Prepare Settings
 textBox1  = tk.Text(f2, height=18, width=50)
 textBox2  = tk.Text(f2, height=1, width=50)
-
 button0T  = tk.Button(f2, text='CORR', anchor='n')
 button1T  = tk.Button(f2, text='PERSON', width=12)
 button2T  = tk.Button(f2, text='NORP', width=12)
@@ -536,12 +600,11 @@ button15T = tk.Button(f2, text='MONEY', width=12)
 button16T = tk.Button(f2, text='QUANTITY', width=12)
 button17T = tk.Button(f2, text='ORDINAL', width=12)
 button18T = tk.Button(f2, text='CARDINAL', width=12)
-
 button_undo = tk.Button(f2, text='UNDO', width=20, command=undo)
 button_undo2 = tk.Button(f2, text='UNDO INDEXING', width=20, command=index_undo)
 button_done = tk.Button(f2, text='DONE', width=20, command=done)
 
-button0T.bind("<Button-1>", hide_me_too)
+button0T.bind("<Button-1>", correct)
 button1T.bind("<Button-1>", index_labeler)
 button2T.bind("<Button-1>", index_labeler)
 button3T.bind("<Button-1>", index_labeler)
@@ -574,12 +637,10 @@ canvas2.configure(yscrollcommand=scrollbary2.set, xscrollcommand=scrollbarx2.set
 #TRAIN
 model_name_lbl   = tk.Label(f3, text=" New Model Name:", anchor='w')
 model_name_etry  = tk.Entry(f3)
-
 old_model_name_lbl = tk.Label(f3, text="Model to train:", anchor='w')
 old_model_name_etry = tk.Entry(f3)
 load_model    = tk.Button(f3, text="Load Custom Model", command=load_custom)
 stock_model  = tk.Button(f3, text="Load Stock Model", command=load_stock)
-
 model_train_data = tk.Text(f3, height=32, width=115)
 load_data_btn    = tk.Button(f3, text="Load Data", command=load_data)
 train_model_btn  = tk.Button(f3, text="Train Model", command=train_model)
@@ -596,7 +657,9 @@ def start_screen():
     button2.grid(row=4, column=1, sticky="nw")
     inst_label1.grid(row=3, column=0, sticky="nw")
     comboBox.grid(row=3, column=1, sticky="nw")
-    regex_button.grid(row=5, column=0, sticky="nw")
+    regex_enter.grid(row=5, column=0, sticky="nw")
+    regex_entry.grid(row=5, column=1, sticky="ew")
+    regex_button.grid(row=6, column=0, sticky="nw")
     container.grid(row=0, column=2, sticky="ew", rowspan=100)
     scrollbary.pack(side="right", fill="y")
     scrollbarx.pack(side="bottom", fill="x")
@@ -638,7 +701,6 @@ def start_screen():
     model_name_etry.grid(row=0, column=1)
     load_data_btn.grid(row=3, column=0)
     train_model_btn.grid(row=3, column=1)
-    
     old_model_name_lbl.grid(row=1, column=0)
     old_model_name_etry.grid(row=1, column=1)
     load_model.grid(row=2, column=0)

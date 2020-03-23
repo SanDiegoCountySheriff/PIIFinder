@@ -1,8 +1,8 @@
 from __future__ import unicode_literals, print_function
 from tkinter.filedialog import askopenfilenames
 from spacy.util import minibatch, compounding
+from tkinter    import filedialog, messagebox
 from spacy.gold import GoldParse
-from tkinter    import filedialog
 from itertools  import product
 from pathlib    import Path
 from tkinter    import ttk
@@ -88,7 +88,6 @@ def progressbar(progress, total, printEnd = "\r"):
 def selector():
     
     global path_list
-
     # Textbox that holds file names is cleared
     textBox.delete(1.0, tk.END)
     # Dialog box appears for user to select files to be scanned 
@@ -145,6 +144,7 @@ def set_up():
 
     # The user selected file's paths are iterated through 
     counter = 0
+    counter2 = 0
     
     #All user selected files are iterated over
     for path in path_list:
@@ -162,6 +162,11 @@ def set_up():
             exp_list = explanation.read().splitlines()          
 
         print("Starting search in: " + path)
+        filenm = path.split('/')[-1]
+        locations_label = tk.Label(scrollable_frame, text=filenm, anchor='w')
+        locations_label.grid(row=counter, column=0, columnspan=2, sticky='ew')
+        locations_label.config(bg="blue", fg="white")
+        counter += 1
 
         #REGEX SEARCH
         with multiprocessing.Pool(multiprocessing.cpu_count()) as p:
@@ -184,7 +189,8 @@ def set_up():
                 exp2 = exp.split('\t', 2)[2]
             except:
                 exp2 = exp
-            
+
+
             # String gets passed to model for NER
             doc = nlp(exp2)
 
@@ -206,11 +212,15 @@ def set_up():
                 # Only entities recognized as ORG or PERSON and larger than the MIN_SIZE
                 # are added to the final_word_list
                 if (x == "ORG" or x == "PERSON") and (len(y) >= MIN_SIZE):
-                    final_word_list.append(exp2 + "==" + x + "==" + ent.text)
+                    final_word_list.append(ent.text + "==" + x + "==" + exp2)
                 elif (x == "LOC" or x == "GPE" or x == "FAC"):
-                    final_loc_list.append(exp2 + "==" + x + "==" + ent.text)
+                    final_loc_list.append(ent.text + "==" + x + "==" + exp2)
                 elif (x == "DATE" or x == "TIME"):
-                    final_dt_list.append(exp2 + "==" + x + "==" + ent.text)
+                    final_dt_list.append(ent.text + "==" + x + "==" + exp2)
+
+        final_word_list.sort()
+        final_loc_list.sort()
+        final_dt_list.sort()
 
         # Benchmark Timer End
         end = time.time()
@@ -236,20 +246,34 @@ def set_up():
             counter += 1
 
             for result in final_word_list:
-                
-                y.write("%s\n" % result)
 
-                # Label is added to the result list on the GUI  
-                label = tk.Label(scrollable_frame, text=result, anchor='w')
-                label.grid(row=counter, column=0, sticky='w')
+                boolean = False
+                res = result.split("==")[0]
 
                 label2 = tk.Text(scrollable_frame2, height=1, width=150)
-                label2.insert(tk.END, result.split('==')[0])
+                label2.insert(tk.END, result.split('==')[2])
                 button2 = tk.Button(scrollable_frame2, text='CORR', anchor='n')
                 button2.bind("<Button-1>", correct)
-                button2.grid(row=counter, column=0, sticky='ew')
-                label2.grid(row=counter, column=1, sticky='w')
-                counter += 1
+                button2.grid(row=counter2, column=0, sticky='ew')
+                label2.grid(row=counter2, column=1, sticky='w')
+                counter2 += 1
+
+                if " " in res:
+                    res = res.split(" ")
+                    for x in res:
+                        if x.upper() in word_list and x.upper() not in ambig_list:
+                            boolean = True
+                else:
+                    if res.upper() in word_list and res.upper() not in ambig_list:
+                        boolean = True
+
+                if boolean:
+                    y.write("%s\n" % result)
+
+                    # Label is added to the result list on the GUI  
+                    label = tk.Label(scrollable_frame, text=result, anchor='w')
+                    label.grid(row=counter, column=0, sticky='w')
+                    counter += 1
 
         with open('Result_Logs/LOCATIONS ' + log_name, 'w+', encoding='utf8') as y:
             
@@ -302,6 +326,9 @@ def set_up():
                 label.grid(row=counter, column=0, columnspan=2, sticky='w')
                 counter += 1
 
+    messagebox.showinfo(title="Message", message="Not all results are being displayed.\nFor complete list of results check 'Result_Logs' folder. ")
+
+
 def regex_add():
 
     addition = regex_entry.get().strip()
@@ -317,6 +344,7 @@ def regex_add():
         bar.writelines(uniqlines)
         bar.close()
     else:
+
         print("Field is empty!")
 
 #############################################
@@ -355,6 +383,7 @@ def correct(event):
     global index_label
 
     if index_label:
+
         list_in_row = scrollable_frame2.grid_slaves(row=int(event.widget.grid_info()['row']))
         
         for i in list_in_row:
@@ -367,22 +396,27 @@ def correct(event):
         training_data.append(tup)
         print(training_data)
     else:
+
         print("You haven't selected any data to train with\n")
 
 def index_undo():
 
     if index_label:
+
         index_label.pop()
         print(index_label)
     else:
+
         print("You haven't selected any data to train with\n")
 
 def undo():
     
     if training_data:
+       
         training_data.pop()
         print(training_data)
     else:
+       
         print("You have no training data\n")
 
 def done():
@@ -391,6 +425,7 @@ def done():
         os.mkdir('Training_Data/')    
 
     data_time = datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')
+   
     with open('Training_Data/TrainingData ' + data_time + '.json','w+') as y:
     
         json.dump(training_data, y)
@@ -402,6 +437,7 @@ def done():
 # TRAIN TAB
 #############################################
 def load_stock():
+  
     global training_path
 
     old_model_name_etry.delete(0, 'end')
@@ -409,6 +445,7 @@ def load_stock():
     old_model_name_etry.insert(tk.END, "en_core_web_lg")
 
 def load_custom():
+   
     global training_path
 
     old_model_name_etry.delete(0, 'end')
@@ -419,7 +456,10 @@ def load_custom():
     old_model_name_etry.insert(tk.END, name + "\n")
 
 def load_data():
+
     global trainingdata
+
+    model_train_data.delete('1.0', tk.END)
     filename  = askopenfilenames()
     trainingdata = filename
     path_list = list(filename)
@@ -429,11 +469,10 @@ def load_data():
         trainingdata = name
         with open(name, 'r') as fl:
 
-            x = fl.read().splitlines()
+            x = json.load(fl)
+            z = json.dumps(x, indent=2)
 
-            for y in x:
-                model_train_data.insert(tk.END, y)
-                model_train_data.insert(tk.END, '\n')
+            model_train_data.insert(tk.END, z)
 
 def train_model():
 
@@ -553,22 +592,21 @@ n.add(f2, text='       PREPARE       ')
 n.add(f3, text='       TRAIN       ')
 
 #Finder Settings
-model_btn1 = tk.Button(f1, text='Custom Model', width=17, command=load_custom_mod)
-model_btn2 = tk.Button(f1, text='Stock Model', width=17, command=load_stock_mod)
-model_entry = tk.Entry(f1, width=42)
-
-button1 = tk.Button(f1, text='Select Files', width=17, command=selector)
-button2 = tk.Button(f1, text='Scan', width=17, command=set_up)
-inst_label1 = tk.Label(f1, text="Min Word Length", anchor='w')
-inst_label2 = tk.Label(f1, text="After scan is finished, click on the button with a word you wouldn't like to search for again.", anchor='w', font="Arial 9 bold")
-comboBox = ttk.Combobox(f1, values=["1", "2","3","4","5","6","7","8"], width=7, justify="center", state="readonly")
+button1     = tk.Button(f1, text='Select Files to Scan', width=36, command=selector)
+textBox     = tk.Text(f1, height=4, width=32)
+model_btn1  = tk.Button(f1, text='Custom Model', width=17, command=load_custom_mod)
+model_btn2  = tk.Button(f1, text='Stock Model', width=17, command=load_stock_mod)
+model_entry = tk.Entry(f1, width=43)
+button2 = tk.Button(f1, text='Scan', width=36, command=set_up)
+inst_label0X = tk.Label(f1, text="", anchor='center', width=37)
+inst_label0  = tk.Label(f1, text="Settings", anchor='center', width=36)
+inst_label0.config(bg="gray", fg="white")
+inst_label1  = tk.Label(f1, text="Min Word Length", anchor='w')
+comboBox     = ttk.Combobox(f1, values=["1", "2","3","4","5","6","7","8"], width=17, justify="center", state="readonly")
 comboBox.current(2)
-textBox = tk.Text(f1, height=4, width=32)
-
-
 regex_button = tk.Button(f1, text='Edit REGEX', width=17, command=regex_edit)
-regex_entry = tk.Entry(f1, width=21)
-regex_enter = tk.Button(f1, text='+ to REGEX', width=17, command=regex_add)
+regex_entry  = tk.Entry(f1, width=20)
+regex_enter  = tk.Button(f1, text='+ to REGEX', width=17, command=regex_add)
 
 #Scrollable Container Config
 container  = tk.Frame(f1)
@@ -602,9 +640,9 @@ button15T = tk.Button(f2, text='MONEY', width=12)
 button16T = tk.Button(f2, text='QUANTITY', width=12)
 button17T = tk.Button(f2, text='ORDINAL', width=12)
 button18T = tk.Button(f2, text='CARDINAL', width=12)
-button_undo = tk.Button(f2, text='UNDO', width=20, command=undo)
+button_undo  = tk.Button(f2, text='UNDO', width=20, command=undo)
 button_undo2 = tk.Button(f2, text='UNDO INDEXING', width=20, command=index_undo)
-button_done = tk.Button(f2, text='DONE', width=20, command=done)
+button_done  = tk.Button(f2, text='DONE', width=20, command=done)
 
 button0T.bind("<Button-1>", correct)
 button1T.bind("<Button-1>", index_labeler)
@@ -628,7 +666,7 @@ button18T.bind("<Button-1>", index_labeler)
 
 #Scrollable Container Config
 container2  = tk.Frame(f2)
-canvas2     = tk.Canvas(container2, height=395, width=1100)
+canvas2     = tk.Canvas(container2, height=395, width=1115)
 scrollbary2 = tk.Scrollbar(container2, orient="vertical", command=canvas2.yview)
 scrollbarx2 = tk.Scrollbar(container2, orient="horizontal", command=canvas2.xview)
 scrollable_frame2 = tk.Frame(canvas2)
@@ -639,11 +677,11 @@ canvas2.configure(yscrollcommand=scrollbary2.set, xscrollcommand=scrollbarx2.set
 #TRAIN
 model_name_lbl   = tk.Label(f3, text=" New Model Name:", anchor='w')
 model_name_etry  = tk.Entry(f3)
-old_model_name_lbl = tk.Label(f3, text="Model to train:", anchor='w')
+old_model_name_lbl  = tk.Label(f3, text="Model to train:", anchor='w')
 old_model_name_etry = tk.Entry(f3)
 load_model    = tk.Button(f3, text="Load Custom Model", command=load_custom)
-stock_model  = tk.Button(f3, text="Load Stock Model", command=load_stock)
-model_train_data = tk.Text(f3, height=32, width=115)
+stock_model   = tk.Button(f3, text="Load Stock Model", command=load_stock)
+model_train_data = tk.Text(f3, height=32, width=112, wrap="none")
 load_data_btn    = tk.Button(f3, text="Load Data", command=load_data)
 train_model_btn  = tk.Button(f3, text="Train Model", command=train_model)
 
@@ -651,21 +689,28 @@ train_model_btn  = tk.Button(f3, text="Train Model", command=train_model)
 def start_screen(): 
 
     #FIND
-    textBox.grid(row=0, column=0, columnspan=2, sticky="nw")
-    model_btn1.grid(row=1, column=0, sticky="nw")
-    model_btn2.grid(row=1, column=1, sticky="nw")
-    model_entry.grid(row=2, column=0, columnspan=2, sticky="nw")
-    button1.grid(row=4, column=0, sticky="nw")
-    button2.grid(row=4, column=1, sticky="nw")
-    inst_label1.grid(row=3, column=0, sticky="nw")
-    comboBox.grid(row=3, column=1, sticky="nw")
-    regex_enter.grid(row=5, column=0, sticky="nw")
-    regex_entry.grid(row=5, column=1, sticky="ew")
-    regex_button.grid(row=6, column=0, sticky="nw")
-    container.grid(row=0, column=2, sticky="ew", rowspan=100)
+    button1.grid(row=0, column=0, columnspan=2, sticky="nw")
+    textBox.grid(row=1, column=0, columnspan=2, sticky="nw")
+    model_btn1.grid(row=2, column=1, sticky="nw")
+    model_btn2.grid(row=2, column=0, sticky="nw")
+    model_entry.grid(row=3, column=0, columnspan=2, sticky="nw")
+    button2.grid(row=4, column=0, columnspan=2, sticky="nw")
+
+    #Find Settings
+    inst_label0X.grid(row=5, column=0, columnspan=2, sticky="nw")
+    inst_label0.grid(row=6, column=0, columnspan=2, sticky="nw")
+    inst_label1.grid(row=7, column=0, sticky="nw")
+    comboBox.grid(row=7, column=1, sticky="nw")
+    regex_enter.grid(row=8, column=0, sticky="nw")
+    regex_entry.grid(row=8, column=1, sticky="w")
+    regex_button.grid(row=9, column=0, sticky="nw")
+
+    #Result Container
+    container.grid(row=0, column=2, sticky="ew", rowspan=5000)
     scrollbary.pack(side="right", fill="y")
     scrollbarx.pack(side="bottom", fill="x")
     canvas.pack(side="left", fill="both", expand=True)
+
 
     #PREPARE
     container2.grid(row=0, column=0, sticky='ew', columnspan=20)

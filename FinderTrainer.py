@@ -267,8 +267,8 @@ def set_up():
                     if res.upper() in word_list and res.upper() not in ambig_list:
                         boolean = True
 
+                y.write("%s\n" % result)
                 if boolean:
-                    y.write("%s\n" % result)
 
                     # Label is added to the result list on the GUI  
                     label = tk.Label(scrollable_frame, text=result, anchor='w')
@@ -285,23 +285,6 @@ def set_up():
 
             #Regex search results are displayed as labels in GUI
             for result in final_loc_list:
-                
-                y.write("%s\n" % result)
-                
-                label = tk.Label(scrollable_frame, text=result, anchor='w')
-                label.grid(row=counter, column=0, columnspan=2, sticky='w')
-                counter += 1
-
-        with open('Result_Logs/DATETIMES ' + log_name, 'w+', encoding='utf8') as y:
-        
-            # Regex label separator is created
-            locations_label = tk.Label(scrollable_frame, text="DATES/TIMES", anchor='w')
-            locations_label.grid(row=counter, column=0, columnspan=2, sticky='ew')
-            locations_label.config(bg="gray", fg="white")
-            counter += 1
-
-            #Regex search results are displayed as labels in GUI
-            for result in final_dt_list:
                 
                 y.write("%s\n" % result)
                 
@@ -326,7 +309,7 @@ def set_up():
                 label.grid(row=counter, column=0, columnspan=2, sticky='w')
                 counter += 1
 
-    messagebox.showinfo(title="Message", message="Not all results are being displayed.\nFor complete list of results check 'Result_Logs' folder. ")
+    #messagebox.showinfo(title="Message", message="Not all results are being displayed.\nFor complete list of results check 'Result_Logs' folder. ")
 
 
 def regex_add():
@@ -382,22 +365,25 @@ def correct(event):
 
     global index_label
 
-    if index_label:
+    #if index_label:
+    widget = app.focus_get() 
+    # Text from widget gets saved to full_line
+    full_line = widget.get("1.0",tk.END).rstrip()
 
-        list_in_row = scrollable_frame2.grid_slaves(row=int(event.widget.grid_info()['row']))
-        
-        for i in list_in_row:
-            i.grid_forget()
+    list_in_row = scrollable_frame2.grid_slaves(row=int(event.widget.grid_info()['row']))
+    
+    for i in list_in_row:
+        i.grid_forget()
 
-        tup = [full_line, {"entities": index_label}]
+    tup = [full_line, {"entities": index_label}]
 
-        index_label = []
+    index_label = []
 
-        training_data.append(tup)
-        print(training_data)
-    else:
+    training_data.append(tup)
+    print(training_data)
+    #else:
 
-        print("You haven't selected any data to train with\n")
+        #print("You haven't selected any data to train with\n")
 
 def index_undo():
 
@@ -600,7 +586,7 @@ model_entry = tk.Entry(f1, width=43)
 button2 = tk.Button(f1, text='Scan', width=36, command=set_up)
 inst_label0X = tk.Label(f1, text="", anchor='center', width=37)
 inst_label0  = tk.Label(f1, text="Settings", anchor='center', width=36)
-inst_label0.config(bg="gray", fg="white")
+inst_label0.config(bg="black", fg="white")
 inst_label1  = tk.Label(f1, text="Min Word Length", anchor='w')
 comboBox     = ttk.Combobox(f1, values=["1", "2","3","4","5","6","7","8"], width=17, justify="center", state="readonly")
 comboBox.current(2)
@@ -676,12 +662,12 @@ canvas2.configure(yscrollcommand=scrollbary2.set, xscrollcommand=scrollbarx2.set
 
 #TRAIN
 model_name_lbl   = tk.Label(f3, text=" New Model Name:", anchor='w')
-model_name_etry  = tk.Entry(f3)
+model_name_etry  = tk.Entry(f3, width=16)
 old_model_name_lbl  = tk.Label(f3, text="Model to train:", anchor='w')
-old_model_name_etry = tk.Entry(f3)
+old_model_name_etry = tk.Entry(f3, width=16)
 load_model    = tk.Button(f3, text="Load Custom Model", command=load_custom)
 stock_model   = tk.Button(f3, text="Load Stock Model", command=load_stock)
-model_train_data = tk.Text(f3, height=32, width=112, wrap="none")
+model_train_data = tk.Text(f3, height=32, width=114, wrap="none")
 load_data_btn    = tk.Button(f3, text="Load Data", command=load_data)
 train_model_btn  = tk.Button(f3, text="Train Model", command=train_model)
 
@@ -710,7 +696,6 @@ def start_screen():
     scrollbary.pack(side="right", fill="y")
     scrollbarx.pack(side="bottom", fill="x")
     canvas.pack(side="left", fill="both", expand=True)
-
 
     #PREPARE
     container2.grid(row=0, column=0, sticky='ew', columnspan=20)
@@ -743,13 +728,13 @@ def start_screen():
     button_done.grid(row=8, column=6, sticky='ew', columnspan=2)
 
     #TRAIN
-    model_train_data.grid(row=0, column=2, rowspan=20)
+    model_train_data.grid(row=0, column=2, rowspan=20, sticky="e")
     model_name_lbl.grid(row=0, column=0)
-    model_name_etry.grid(row=0, column=1)
+    model_name_etry.grid(row=0, column=1, sticky="w")
     load_data_btn.grid(row=3, column=0)
     train_model_btn.grid(row=3, column=1)
     old_model_name_lbl.grid(row=1, column=0)
-    old_model_name_etry.grid(row=1, column=1)
+    old_model_name_etry.grid(row=1, column=1, sticky="w")
     load_model.grid(row=2, column=0)
     stock_model.grid(row=2, column=1)
 

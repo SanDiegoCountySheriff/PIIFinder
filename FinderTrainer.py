@@ -212,11 +212,11 @@ def set_up():
                 # Only entities recognized as ORG or PERSON and larger than the MIN_SIZE
                 # are added to the final_word_list
                 if (x == "ORG" or x == "PERSON") and (len(y) >= MIN_SIZE):
-                    final_word_list.append(ent.text + "==" + x + "==" + exp2)
+                    final_word_list.append(ent.text + "==" + x + "==" + exp)
                 elif (x == "LOC" or x == "GPE" or x == "FAC"):
-                    final_loc_list.append(ent.text + "==" + x + "==" + exp2)
+                    final_loc_list.append(ent.text + "==" + x + "==" + exp)
                 elif (x == "DATE" or x == "TIME"):
-                    final_dt_list.append(ent.text + "==" + x + "==" + exp2)
+                    final_dt_list.append(ent.text + "==" + x + "==" + exp)
 
         final_word_list.sort()
         final_loc_list.sort()

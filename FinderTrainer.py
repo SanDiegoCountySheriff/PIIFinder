@@ -2,7 +2,7 @@ from __future__ import unicode_literals, print_function
 from tkinter.filedialog import askopenfilenames
 from spacy.util import minibatch, compounding
 from tkinter    import filedialog, messagebox
-from spacy.gold import GoldParse
+from spacy.training import Example
 from itertools  import product
 from pathlib    import Path
 from tkinter    import ttk
@@ -13,7 +13,6 @@ import os.path
 import random
 import spacy
 import json
-import plac
 import time
 import sys
 import io
@@ -511,7 +510,7 @@ def train_model():
 
             for doc in nlp.pipe(revision_texts):
                 entities = [(e.start_char, e.end_char, e.label_) for e in doc.ents]
-                REVISION_DATA.append((doc, GoldParse(doc, entities=entities)))
+                REVISION_DATA.append((doc, Example.from_dict(doc, {"entities": entities})))
 
             # get names of other pipes to disable them during training
             pipe_exceptions = ["ner", "trf_wordpiecer", "trf_tok2vec"]

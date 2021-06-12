@@ -2,12 +2,14 @@
 Python Application using spaCy to find Personal Identifying Information
 
 ## Requirements  
+**PIIFinder** 
+Install Python 3.x
 ###### If you're behind a corporate firewall you might need to use the second set of commands to complete the download.
 **PIIFinder**  
 ```
 git clone https://github.com/SanDiegoCountySheriff/PIIFinder.git
 or
-Download the files directly from github
+Download the files directly from github, then extract them from the ZIP file.
 ```
 **spaCy**  
 ```
@@ -32,6 +34,8 @@ pip install path/to/model/en_core_web_lg-3.0.0.tar.gz
 ```
 
 ## Instructions
+1. Open the folder (PIIFinder-master) where you saved the files from git 
+1. Double click FinderTrainer.py
 1. Click on the "Select Files" button and select the files you'd like to scan for PII.
 1. Click on the "Scan" button
 1. After the scan is done look through the results and click on the buttons that include words that you wouldn't like to search for again.

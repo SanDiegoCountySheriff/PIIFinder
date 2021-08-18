@@ -28,7 +28,7 @@ path_list     = []
 full_line     = ""
 training_path = ""
 trainingdata  = ""
-model_path    = ""
+model_path    = "en_core_web_lg"
 
 ####################
 # Global Constants #

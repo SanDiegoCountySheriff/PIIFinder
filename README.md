@@ -16,14 +16,14 @@ Python application using spaCy to find Personal Identifying Information in any t
     ```
     python -m spacy download en_core_web_lg
     or
-    pip --cert [ca-bundle cert] --proxy [proxy address:port] install https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-2.2.5/en_core_web_lg-2.2.5.tar.gz
+    pip --cert [ca-bundle cert] --proxy [proxy address:port] install https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.2.0/en_core_web_lg-3.2.0.tar.gz
     ```
     ### Manual Model install
-    If you run into issues downloading the pre-trained model using pip, you can   download the model manually using this link: https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.0.0/en_core_web_lg-3.0.0.tar.gz
+    If you run into issues downloading the pre-trained model using pip, you can   download the model manually using this link: https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.2.0/en_core_web_lg-3.2.0.tar.gz
     Then run pip against the local file to install it.
 
     ```
-    pip install path/to/model/en_core_web_lg-3.0.0.tar.gz
+    pip install path/to/model/en_core_web_lg-3.2.0.tar.gz
     ```
 1. Next, either clone or download the **PIIFinder**  code from github.
     ```
